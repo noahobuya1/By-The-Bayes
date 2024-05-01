@@ -1,0 +1,32 @@
+---
+title: "By the Bayes (STA240 Project)"
+author: "Noah Obuya & Tamya Davidson"
+date: "2024-05-01"
+output: html_document
+---
+
+# Proposal
+
+## Introduction
+
+Welcome to By the Bayes! A restaurant serving food straight from the Louisiana Bayou. What makes our restaurant special is that every step of our process is backed by probabilistic modeling and inference. It's in our name.
+
+## Analysis Plan
+
+## References
+
+# Project
+
+## Introduction
+
+## Analysis
+
+#### Part One
+
+#### Part Two
+
+#### Part Three, etc.
+
+## Discussions & Limitations
+
+## Conclusion
