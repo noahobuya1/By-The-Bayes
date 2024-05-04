@@ -13,6 +13,8 @@ output:
 
 library(tidyverse)
 library(knitr)
+library(rmarkdown)
+library(pandoc)
 
 ```
 
@@ -56,9 +58,9 @@ $$
 
 We are assuming a customer spends \$50 per meal, and that each chef earns a wage of \$40 per hour.
 
-To simulate this scenario, we will build upon the model we created in Scenario One. The main differences being an increase in tables, and the addition of an input variable (number of chefs). To better model the more sophisticated scenario, we will be using the queuing library in R-Studio. The queueing library in R is a package designed to help users model and analyze different types of queueing systems, which are scenarios where tasks, items, or people wait in line to be processed or served. In other words, it helps you understand and simulate situations similar to lines at a grocery store, calls waiting to be answered at a call center, or our very own probabilistic model!
+To simulate this scenario, we will expand upon the model developed in Scenario One with increased tables and an additional input for the number of chefs. We'll use the queueing library in R-Studio, designed to model and analyze queueing systems where tasks or people wait to be processed. This allows us to simulate real-world queuing situations like our own@
 
-Queueing theory uses a variety of models to describe different systems, and one common way to describe these models is with Kendall's notation (M/M/c). The first M stands for Markovian, meaning memoryless and random, the second M stands for the wait in between service times being modeled by an exponential distribution and the c stands for the amount of servers. In our first model, our Kendall notation would have looked like $M/M/1$ because we only had one server, or in our case, chef. In this model, our c remains a variable because we are trying to find out the best number of chefs to maintain.
+Queueing theory employs various models to represent systems, commonly described using Kendall's notation (M/M/c), where 'M' stands for Markovian (memoryless and random), and 'c' represents the number of servers. Our initial model was an M/M/1, indicating a single server or chef. In the current model, 'c' varies as we explore the optimal number of chefs needed.
 
 After running a simulation using queuing theory, we will create a function that, when given the input of chef number, returns to us average wait time, revenue, wages and of course, profits. This final table will allow us to make a decision on how many chefs we should hire.
 
@@ -89,18 +91,12 @@ p
 
 ```
 
-Figure 1 allows us to explain our mean wait time. Given the PDF (Probability Density Function) of our model, we see that the average wait time is 1/6 of an hour, or 10 minutes. This can also be described by $$1/ \lambda$$, once again giving us 1/6 of an hour.
+Figure 1 highlights the mean wait time as indicated by our model's Probability Density Function (PDF), where the average wait time is shown as $\frac{1}{\lambda} = \frac{1}{6}$ hours, or approximately 10 minutes. This model, ideal for initial planning, assumes a constant service rate and single service channel but its memorylessness—constant probability of service completion regardless of waiting time—may not align well with variable real-world customer arrivals.
 
-Figure 1 showcases the probability density function (PDF) for our basic queuing model's wait times, characterized by an exponential distribution with a mean wait time of $\frac{1}{\lambda} = \frac{1}{6}$ hours, or approximately 10 minutes. This simple model assumes a constant service rate and a single service channel, making it particularly suited for initial planning stages.
+The observed variability in wait times from the graph, ranging from shorter to unexpectedly longer, illustrates the limitations of the exponential distribution and the importance of employing more comprehensive models like M/M/c in complex settings. This adaptation is crucial for effectively managing customer expectations and optimizing service delivery strategies.
 
-However, the exponential distribution's memorylessness property — where the probability of service completion is constant regardless of how long a customer has already waited — does not always align with practical service scenarios. In reality, customer arrivals can be highly variable, and during periods of high demand, this variability can lead to significantly longer wait times than our model suggests.
-
-From the graph, we observe that while many customers may experience wait times close to the mean, a substantial variation is possible, indicative of the potential for both shorter and unexpectedly longer waits. Such insights are crucial for managing customer expectations and improving service delivery strategies. They highlight the need for employing more comprehensive models like the M/M/c system in settings where multiple service points or varied service rates play a critical role in daily operations.
 
 #### Part Two - First Scenario One Simulation
-
-
-For our first model, we decided to look at the start and end times of each customer's service. The weight time is calculated by the difference between their service start time and their service end time.
 
 ```{r s1simulation1, echo=FALSE, warning=FALSE, message=FALSE}
 
@@ -204,7 +200,7 @@ names(average_wait_times_df)[1] <- "Simulation Run"
 names(average_wait_times_df)[2] <- "Average Wait Time (hours)"
 names(average_wait_times_df)[3] <- "Average Wait Time (minutes)"
 
-knitr::kable(average_wait_times_df, format = "markdown", caption = "Average Wait Times Improved Simulation")
+kable(average_wait_times_df, format = "markdown", caption = "Average Wait Times Improved Simulation")
 
 
 ```
@@ -215,57 +211,59 @@ This methodology provides deeper insights into how service efficiency impacts cu
 
 ### Scenario Two
 
-In Scenario 2, we used the queueing model package from R. The package allowed us to calculate performance measures such as the average number of customers in the system, the average waiting time, the utilization of servers, and the probability of having a certain number of customers in the system. By simulating different scenarios with varying numbers of chefs (L), we can determine the optimal number of chefs to minimize wait times and maximize profits. The package also allowed us to evaluate the impact of different factors, such as customer arrival rates and service times, on the restaurant's performance.
 
-```{r Wait Times and Tables}
+```{r Wait Times and Tables, echo=FALSE, warning=FALSE, message=FALSE}
 
 library(queueing)
 
 simulate_day <- function(L) {
-  lambda_A <- 10  # Arrival rate (customers per hour)
-  num_tables <- 5  # Number of dining tables
-  lambda_S <- 3 * L  # Service rate per hour based on number of chefs
+  lambda_A <- 10  
+  num_tables <- 5  
+  lambda_S <- 3 * L  
 
-  # M/M/c model where c = number of tables
-  # and the service rate is adjusted based on the number of chefs
+ 
   Q_mm_c <- NewInput.MMC(lambda = lambda_A, mu = lambda_S, c = num_tables, n = 1000)
   result <- QueueingModel(Q_mm_c)
   
-  # Extract average wait time in the queue (time spent waiting for a table)
-  avg_wait_time <- result$Lq / lambda_A * 60  # Convert hours to minutes
+  avg_wait_time <- result$Lq / lambda_A * 60  
   
   return(list(avg_wait_time = avg_wait_time, utilization = result$U))
 }
 
-# Testing with different number of chefs
-simulate_day(2)
-simulate_day(1)
+chef_values <- 1:10  
+wait_times <- numeric(length(chef_values))
+utilizations <- numeric(length(chef_values))
 
+for (i in seq_along(chef_values)) {
+  sim_results <- simulate_day(chef_values[i])
+  wait_times[i] <- sim_results$avg_wait_time
+}
+
+# Create a table
+chef_table <- data.frame(
+  "Number of Chefs" = chef_values,
+  "Average Wait Time" = wait_times
+)
+
+names(chef_table)[1] <- "Number of Chefs"
+names(chef_table)[2] <- "Average Wait Time (Hours)"
+
+kable(chef_table, format = "markdown", caption = "Average Wait Times predicted by Chef Number")
 ```
+As the number of chefs $L$ increases, the service rate $\lambda_S$ multiplies accordingly, which enhances the restaurant's ability to manage customer queues effectively. This directly reduces the average wait time, thereby potentially increasing customer satisfaction and retention. However, diminishing returns are likely as the number of chefs increases beyond the point where service rate far exceeds the arrival rate of new customers, leading to unnecessary labor costs without corresponding increases in customer throughput. I would say, at this stage of analysis, we reach that point past 6 chefs.
 
-The model above uses a queueing system for our restaurant with a varying number of chefs LL. It uses the M/M/c queueing model, where:
 
--   λAλA​ is the arrival rate of customers (10 customers per hour),
-
--   **`num_tables`** is the number of dining tables (5 tables),
-
--   λSλS​ is the service rate per hour, which is calculated as 3×L3×L based on the number of chefs.
-
-    By simulating the queueing system with different numbers of chefs, the model helps determine the optimal number of chefs to minimize customer wait times and maximize profits.
-
-```{r Optimal Chefs}
+```{r Optimal Chefs, echo=FALSE, warning=FALSE, message=FALSE}
 
 library(queueing)
 
-# Function to simulate one day's operation and calculate profits
 simulate_day <- function(L) {
-  lambda_A <- 10  # Arrival rate (customers per hour)
-  num_tables <- 5  # Number of dining tables
-  lambda_S <- 3 * L  # Service rate per hour based on number of chefs
-  opening_hour <- 10  # Restaurant opening hour
-  closing_hour <- 22  # Restaurant closing hour
+  lambda_A <- 10  
+  num_tables <- 5  
+  lambda_S <- 3 * L  
+  opening_hour <- 10  
+  closing_hour <- 22
 
-  # Using M/M/c queue model
   Q_mm_c <- NewInput.MMC(lambda = lambda_A, mu = lambda_S, c = num_tables, n = 1000)
   result <- QueueingModel(Q_mm_c)
 
@@ -300,15 +298,67 @@ optimize_chefs <- function(max_chefs = 10) {
 
 # Execute the optimization function and print results
 optimization_results <- optimize_chefs()
-print(optimization_results$details)
-cat("Optimal number of chefs for maximum profits:", optimization_results$optimal$Chefs, "\n")
 
 
-
+kable(optimization_results$details, format = "markdown", caption = "Optimal Number of Chefs")
 
 ```
 
-This model simulates the daily operation of a restaurant to determine the optimal number of chefs that maximize profits while considering customer wait times. By varying the number of chefs, the model calculates the restaurant's revenue, chef wages, and profits for each scenario. It uses the M/M/c queuing model to simulate customer arrivals, service times, and queue lengths. The model then identifies the number of chefs that results in the highest profits.
+From a business perspective, the optimal number of chefs $L$ should be selected to balance the cost of hiring additional staff against the generated revenue from serving more customers efficiently. The profits calculated suggest that maximizing profits involves not merely increasing the number of chefs to reduce wait times but also considering the point where additional chefs no longer contribute to significant increases in customer throughput or revenue. At this stage of analysis, one could go with two perspectives, pure profit or customer experience. For the purposes of pure profit, it is clear that one chef takes the cake. Yet, the customer wait time for one chef is exponentially higher than all the others, detailing the stark need for more than one chef. Two chefs gets you the perfect balance of profit and wait time. $\frac{9}{100}$ of an hour is only 5.4 minutes, which is a very reasonable time to wait for food.
+
+```{r}
+library(queueing)
+
+# Function to simulate a day and calculate downtime
+simulate_day_with_downtime <- function(L) {
+  lambda_A <- 10  # Customers arriving per hour
+  num_tables <- 5  # Number of available tables
+  lambda_S <- 3 * L  # Service rate, dependent on number of chefs
+  
+  # Queueing model for an M/M/c system
+  Q_mm_c <- NewInput.MMC(lambda = lambda_A, mu = lambda_S, c = num_tables, n = 1000)
+  result <- QueueingModel(Q_mm_c)
+  
+  # Calculate downtime as the proportion of time when chefs are underutilized
+  expected_customers_served_per_hour <- min(lambda_A, lambda_S)
+  expected_idle_chefs_per_hour <- max(0, L - expected_customers_served_per_hour / 3)
+  downtime_proportion <- expected_idle_chefs_per_hour / L
+  
+  # Check if utilization is set in the result, otherwise set to 0
+  utilization <- ifelse(is.null(result$U), 0, result$U)
+  
+  return(list(downtime_proportion = downtime_proportion, utilization = utilization))
+}
+
+# Simulating different numbers of chefs and recording downtime
+chef_values <- 1:10
+downtime_results <- numeric(length(chef_values))
+utilizations <- numeric(length(chef_values))
+
+for (i in seq_along(chef_values)) {
+  sim_results <- simulate_day_with_downtime(chef_values[i])
+  downtime_results[i] <- sim_results$downtime_proportion
+  utilizations[i] <- sim_results$utilization
+}
+
+# Create a table of results
+downtime_table <- data.frame(
+  "Number of Chefs" = chef_values,
+  "Downtime Proportion" = downtime_results)
+
+names(downtime_table)[1] <- "Number of Chefs"
+names(downtime_table)[2] <- "Downtime Proportion"
+
+# Use kable from knitr to create a nicely formatted table
+library(knitr)
+kable(downtime_table, format = "markdown", caption = "Proportion of Downtime and Utilization by Number of Chefs")
+
+names(downtime_table)[1] <- "Number of Chefs"
+names(downtime_table)[2] <- "Downtime Proportion"
+
+```
+One final thing that is essential to factor in is downtime for the number of chefs we possess. Without proper downtime, no cleaning, breaks, or just time to catch a breath can occur. This will lead to decreased levels of customer satisfaction when they see dirty counter tops or encounter peeved chefs. With downtime as an added variable of interest, we see that 2 chefs is no longer the optimal number. Only having two chefs allows for no downtime. *Four chefs* seems to be the sweet spot, with 10 minutes of downtime (for all chefs collectively) per hour. That amount also maximizes profits the most and ensures a very speedy customer wait time. 
+
 
 ## Discussions & Limitations
 
