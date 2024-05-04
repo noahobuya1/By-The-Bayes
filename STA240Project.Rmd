@@ -5,31 +5,82 @@ date: "2024-05-01"
 output: html_document
 ---
 
+```{r intitializing}
+
+library(tidyverse)
+
+```
+
 # Proposal
 
 ## Introduction
 
-Welcome to By the Bayes! A restaurant serving food straight from the Louisiana Bayou. What makes our restaurant special is that every step of our process is backed by probabilistic modeling and inference. It's in our name.
+Welcome to By the Bayes! A restaurant serving food straight from the Louisiana Bayou. What makes our restaurant special is that every step of our process is backed by probabilistic modeling and inference. It's in our name. Today we'll be taking you through the customer's queuing experience in two different scenarios, providing simulations and explanations to back all of our claims.
 
 ## Analysis Plan
-To analyze the customer's queueing experience,set the average number of customers in the system = (L), the average number of customers waiting in line = (Lq), the average time a customer spends in the system = (W), and the average time a customer spends waiting in line = (Wq).
+
+#### Scenario One
+
+Our first scenario models simple setting with one dining table and one chef, with operating hours 10am - 10pm. Suppose customers arrive according to a Poisson process with a rate of λA = 5 per hour.
+
+$$
+ \lambda_A = 5 \ \text{{per hour}} , \ \text{40 total customers from open to close}
+$$
+
+Once a customer arrives, their total service time (ordering, cooking and eating) can be modeled by an exponential distribution with rate λS = 6.
+
+$$
+ \lambda_S = 6 
+$$
+
+To get a sense of the customer queuing experience, we will run multiple simulations of our exponential distribution. The simulation will model the time it takes to service one customer. Essentially, once one customer comes in, we want to know how long it takes for another customer to be serviced. We only have one table and one chef, so we are only able to handle one customer at a time. We will build upon the exponential distribution simulation to create an algorithm that lets us know whether a not a table is ready for a customer.
+
+To analyze the customer's queueing experience, set the average number of customers in the system = (L), the average number of customers waiting in line = (Lq), the average time a customer spends in the system = (W), and the average time a customer spends waiting in line = (Wq).
 
 (L):represents the average number of customers, including those being served and those waiting in line. In this scenario, we can use the formula for an M/M/1 queue to calculate L: L= λa/ μ−λa
 
- 
+#### Scenario Two
+
 ## References
 
-# Project
+#### Lab 10
 
-## Introduction
+Rossetti, R. (2024, April 4). Sakai.duke.edu. <https://sakai.duke.edu/access/content/group/2e691ccc-405a-4982-bf81-42137192402e/Labs/lab10_sol.html>
 
-## Analysis
+#### Simulation of Exponential Distribution using R
 
-#### Part One
+Hernández, C. (2020, September 29). Simulation of Exponential Distribution using R. RPubs. <https://rpubs.com/carlosehernandezr/Exponential-Distribution#>:\~:text=The%20exponential%20distribution%20can%20be,deviation%20is%20also%201%2Flambda
 
-#### Part Two
+# Analysis
 
-#### Part Three, etc.
+## Scenario One
+
+#### Part One - The Mean
+
+```{r meanwaittime plot}
+
+
+lambda_s1 <- 6
+
+x <- seq(0, 1, length.out = 1000)
+y <- dexp(x, rate = lambda_s1)
+
+meanwaitingtime <- data.frame(x = x, y = y)
+
+p <- ggplot(meanwaitingtime, aes(x = x, y = y)) +
+  geom_line() +
+  geom_vline(aes(xintercept = 1/lambda_s1), linetype = "dashed", color = "red") +
+  annotate("text", x = 1/lambda_s1, y = max(meanwaitingtime$y)/2, label = "Mean waiting time", hjust = -0.1, color = "red") +
+  labs(x = "Waiting time", y = "Density", title = "Exponential distribution with λ = 6")
+
+
+```
+
+Figure 1 allows us to explain our mean wait time. Given the PDF (Probability Density Function) of our model, we see that the average wait time is 1/6 of an hour, or 10 minutes. This can also be described by $$1/ \lambda$$, once again giving us 1/6 of an hour.
+
+#### Part Two - The Exponential Simulation
+
+#### Part Three - The Exponential Simulation with Table Monitoring
 
 ## Discussions & Limitations
 
