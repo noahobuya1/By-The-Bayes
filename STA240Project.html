@@ -454,11 +454,70 @@ wait time is 1/6 of an hour, or 10 minutes. This can also be described
 by <span class="math display">\[1/ \lambda\]</span>, once again giving
 us 1/6 of an hour.</p>
 </div>
-<div id="part-two---the-exponential-simulation" class="section level4">
-<h4>Part Two - The Exponential Simulation</h4>
+<div id="part-two---the-exponential-simulation-without-accounting-for-a-que" class="section level4">
+<h4>Part Two - The Exponential Simulation without accounting for a
+Que</h4>
+<pre class="r"><code>lambda_A &lt;- 5  # Arrival rate per hour
+lambda_S &lt;- 6  # Service rate per hour
+num_customers &lt;- 1000
+num_simulations &lt;- 3
+
+# Function to run a single simulation and return the average wait time
+run_simulation &lt;- function() {
+  arrival_times &lt;- cumsum(rexp(num_customers, rate=lambda_A))
+  service_start_times &lt;- pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers-1, rate=lambda_S)))
+  service_end_times &lt;- service_start_times + rexp(num_customers, rate=lambda_S)
+  wait_times &lt;- service_start_times - arrival_times
+  return(mean(wait_times))
+}
+
+# Run simulations and calculate average wait times
+average_wait_times &lt;- replicate(num_simulations, run_simulation())</code></pre>
+<pre><code>## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers -
+## : an argument will be fractionally recycled
+
+## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers -
+## : an argument will be fractionally recycled
+
+## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers -
+## : an argument will be fractionally recycled</code></pre>
+<pre class="r"><code># Output average wait times for each run
+cat(&quot;Average Wait Times for Each Run:&quot;, average_wait_times, &quot;\n&quot;)</code></pre>
+<pre><code>## Average Wait Times for Each Run: 0.4440846 0.4133845 0.4297338</code></pre>
 </div>
-<div id="part-three---the-exponential-simulation-with-table-monitoring" class="section level4">
-<h4>Part Three - The Exponential Simulation with Table Monitoring</h4>
+<div id="part-three---the-exponential-simulation-accounting-for-a-que" class="section level4">
+<h4>Part Three - The Exponential Simulation accounting for a Que</h4>
+<pre class="r"><code>lambda_A &lt;- 5  # Arrival rate per hour
+lambda_S &lt;- 6  # Service rate per hour
+num_customers &lt;- 1000
+num_simulations &lt;- 3
+
+# Function to run a single simulation and return the average wait time
+run_simulation &lt;- function() {
+  arrival_times &lt;- cumsum(rexp(num_customers, rate=lambda_A))
+  service_start_times &lt;- numeric(num_customers)
+  service_end_times &lt;- numeric(num_customers)
+  
+  # Initialize the service times
+  service_start_times[1] &lt;- arrival_times[1]
+  service_end_times[1] &lt;- service_start_times[1] + rexp(1, rate=lambda_S)
+  
+  # Calculate service times for each subsequent customer
+  for (i in 2:num_customers) {
+    service_start_times[i] &lt;- max(arrival_times[i], service_end_times[i-1])
+    service_end_times[i] &lt;- service_start_times[i] + rexp(1, rate=lambda_S)
+  }
+  
+  wait_times &lt;- service_start_times - arrival_times
+  return(mean(wait_times))
+}
+
+# Run simulations and calculate average wait times
+average_wait_times &lt;- replicate(num_simulations, run_simulation())
+
+# Output average wait times for each run
+cat(&quot;Average Wait Times for Each Run:&quot;, average_wait_times, &quot;\n&quot;)</code></pre>
+<pre><code>## Average Wait Times for Each Run: 0.3937929 0.5832927 0.7307773</code></pre>
 </div>
 </div>
 <div id="discussions-limitations" class="section level2">
