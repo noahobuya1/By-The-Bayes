@@ -80,6 +80,60 @@ Figure 1 allows us to explain our mean wait time. Given the PDF (Probability Den
 
 #### Part Two - The Exponential Simulation
 
+```{r}
+# Parameters
+lambda_A <- 5  # Arrival rate (customers per hour)
+lambda_S <- 6  # Service rate (customers per hour)
+num_customers <- 1000  # Number of customers to simulate
+num_simulations <- 3  # Number of simulations
+
+# Function to run a single simulation and return the average wait time
+run_simulation <- function() {
+  # Simulate arrival times using Poisson process
+  arrival_times <- cumsum(rexp(num_customers, lambda_A))
+  
+  # Initialize variables
+  service_end_time <- 0
+  wait_times <- numeric(num_customers)
+  
+  # Simulate the system
+  for (i in 1:num_customers) {
+    # Calculate service start time for current customer
+    service_start_time <- max(arrival_times[i], service_end_time)
+    
+    # Calculate service end time for current customer
+    service_end_time <- service_start_time + rexp(1, lambda_S)
+    
+    # Calculate wait time for current customer
+    wait_times[i] <- service_start_time - arrival_times[i]
+  }
+  
+  # Return wait times
+  return(wait_times)
+}
+
+# Run simulations and collect wait times
+wait_times_list <- lapply(1:num_simulations, function(x) replicate(num_simulations, run_simulation()))
+
+# Calculate randomized average wait time for each simulation
+randomized_avg_wait_times <- lapply(wait_times_list, function(wait_times_matrix) apply(wait_times_matrix, 2, mean))
+
+# Calculate average wait time for each run
+average_wait_times <- sapply(randomized_avg_wait_times, mean)
+
+# Output average wait times for each run
+cat("Average Wait Times for Each Run:", average_wait_times, "\n")
+
+```
+
+These average wait times represent the typical amount of time a customer spends waiting in line before being served, considering the arrival rate of customers and the service rate of the chef.If the average wait times are consistently high across runs, the restaurant may consider adding more dining tables, hiring additional staff, or optimizing the service process to reduce wait times and improve customer experience. On the other hand, if the average wait times are low and consistent, the restaurant may be efficiently managing customer flow, and no major changes may be necessary.
+
+Sources: <https://saas.studentorg.berkeley.edu/rp/a-shallow-dive-into-time-series-analysis-of-local-restaurant-data-using-r>
+
+<https://web.stanford.edu/class/bios221/labs/simulation/Lab_3_simulation.html>
+
+<https://digitalcommons.library.umaine.edu/cgi/viewcontent.cgi?params=/context/honors/article/1787/&path_info=Everyone_s_a_Waiter_A_Data_Driven_Queuing_Simulation_Model_of_Mike_s_Clam_Shack.pdf>
+
 #### Part Three - The Exponential Simulation with Table Monitoring
 
 ## Discussions & Limitations
