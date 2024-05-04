@@ -106,6 +106,8 @@ cat("Average Wait Times for Each Run:", average_wait_times, "\n")
 
 ```
 
+The code above attempts to simulate the queueing process of customers at a dining establishment where arrival and service times follow Poisson and exponential distributions, respectively. The system is simulated for 1000 customers, and the simulation is repeated 3 times. For each simulation, arrival times are generated according to a Poisson process, and service times are modeled by an exponential distribution. The simulation calculates the start and end times of each customer's service and computes the wait time for each customer as the difference between their service start time and arrival time. The average wait time for each simulation run is then calculated and displayed.
+
 #### Part Three - The Exponential Simulation accounting for a Que
 
 ```{r}
@@ -143,6 +145,8 @@ average_wait_times <- replicate(num_simulations, run_simulation())
 cat("Average Wait Times for Each Run:", average_wait_times, "\n")
 
 ```
+
+In part two, we attempted to calculate the start time of each customer's service as the maximum of their arrival time or the end time of the previous customer\'s service. Model one did not correctly account for the situation where the first customer\'s service time determines the second customer's potential wait, and it incorrectly handles the alignment of times for all customers. The service rate ,mu, is faster than the arrival rate lambda, which would generally suggest a system that doesn't build up a long queue. However, the theoretical waiting time still suggests a significant wait because, while the queue processes quickly, the relative closeness of the rates means each customer often has to wait for the previous one to finish. By increasing the number of customers and simulations, we got a more accurate representation of the theoretical values, averaging out the anomalies and fluctuations that were do to randomness.  Model two also handled sequential dependency. Each customer's service start time correctly depends on both their arrival time and the exact end time of the previous customer's service. This ensures that the simulation accurately represents a queue where each customer waits if and only if the previous customer has not finished. The loop is also initialized correctly, as it sets up the first customer and then iterates through the rest, ensuring that each customer is handled accurately without index misalignment.
 
 ## Discussions & Limitations
 
