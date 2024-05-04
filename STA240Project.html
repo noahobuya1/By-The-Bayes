@@ -299,17 +299,23 @@ overflow-y: auto;
 border: 1px solid #ddd;
 border-radius: 4px;
 }
-.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-content: "\e259";
+.tabset-dropdown > .nav-tabs > li.active:before {
+content: "";
 font-family: 'Glyphicons Halflings';
 display: inline-block;
 padding: 10px;
 border-right: 1px solid #ddd;
 }
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-content: "\e258";
-font-family: 'Glyphicons Halflings';
+content: "";
 border: none;
+}
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+content: "";
+font-family: 'Glyphicons Halflings';
+display: inline-block;
+padding: 10px;
+border-right: 1px solid #ddd;
 }
 .tabset-dropdown > .nav-tabs > li.active {
 display: block;
@@ -368,6 +374,14 @@ our name.</p>
 </div>
 <div id="analysis-plan" class="section level2">
 <h2>Analysis Plan</h2>
+<p>To analyze the customer’s queueing experience,set the average number
+of customers in the system = (L), the average number of customers
+waiting in line = (Lq), the average time a customer spends in the system
+= (W), and the average time a customer spends waiting in line =
+(Wq).</p>
+<p>(L):represents the average number of customers, including those being
+served and those waiting in line. In this scenario, we can use the
+formula for an M/M/1 queue to calculate L: L= λa/ μ−λa</p>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>

@@ -12,7 +12,11 @@ output: html_document
 Welcome to By the Bayes! A restaurant serving food straight from the Louisiana Bayou. What makes our restaurant special is that every step of our process is backed by probabilistic modeling and inference. It's in our name.
 
 ## Analysis Plan
+To analyze the customer's queueing experience,set the average number of customers in the system = (L), the average number of customers waiting in line = (Lq), the average time a customer spends in the system = (W), and the average time a customer spends waiting in line = (Wq).
 
+(L):represents the average number of customers, including those being served and those waiting in line. In this scenario, we can use the formula for an M/M/1 queue to calculate L: L= λa/ μ−λa
+
+ 
 ## References
 
 # Project
