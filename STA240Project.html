@@ -299,17 +299,23 @@ overflow-y: auto;
 border: 1px solid #ddd;
 border-radius: 4px;
 }
-.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-content: "\e259";
+.tabset-dropdown > .nav-tabs > li.active:before {
+content: "";
 font-family: 'Glyphicons Halflings';
 display: inline-block;
 padding: 10px;
 border-right: 1px solid #ddd;
 }
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-content: "\e258";
-font-family: 'Glyphicons Halflings';
+content: "";
 border: none;
+}
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+content: "";
+font-family: 'Glyphicons Halflings';
+display: inline-block;
+padding: 10px;
+border-right: 1px solid #ddd;
 }
 .tabset-dropdown > .nav-tabs > li.active {
 display: block;
@@ -358,16 +364,14 @@ display: none;
 
 
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.4.4     ✔ tibble    3.2.1
-## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-## ✔ purrr     1.0.2     
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+## ✔ ggplot2 3.3.6     ✔ purrr   0.3.4
+## ✔ tibble  3.1.8     ✔ dplyr   1.0.9
+## ✔ tidyr   1.2.0     ✔ stringr 1.4.1
+## ✔ readr   2.1.2     ✔ forcats 0.5.2
 ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()
-## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <div id="proposal" class="section level1">
 <h1>Proposal</h1>
 <div id="introduction" class="section level2">
@@ -473,17 +477,27 @@ run_simulation &lt;- function() {
 
 # Run simulations and calculate average wait times
 average_wait_times &lt;- replicate(num_simulations, run_simulation())</code></pre>
-<pre><code>## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers -
-## : an argument will be fractionally recycled
+<pre><code>## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers - :
+## an argument will be fractionally recycled
 
-## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers -
-## : an argument will be fractionally recycled
+## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers - :
+## an argument will be fractionally recycled
 
-## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers -
-## : an argument will be fractionally recycled</code></pre>
+## Warning in pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers - :
+## an argument will be fractionally recycled</code></pre>
 <pre class="r"><code># Output average wait times for each run
 cat(&quot;Average Wait Times for Each Run:&quot;, average_wait_times, &quot;\n&quot;)</code></pre>
-<pre><code>## Average Wait Times for Each Run: 0.4440846 0.4133845 0.4297338</code></pre>
+<pre><code>## Average Wait Times for Each Run: 0.4256319 0.4063056 0.4401894</code></pre>
+<p>The code above attempts to simulate the queueing process of customers
+at a dining establishment where arrival and service times follow Poisson
+and exponential distributions, respectively. The system is simulated for
+1000 customers, and the simulation is repeated 3 times. For each
+simulation, arrival times are generated according to a Poisson process,
+and service times are modeled by an exponential distribution. The
+simulation calculates the start and end times of each customer’s service
+and computes the wait time for each customer as the difference between
+their service start time and arrival time. The average wait time for
+each simulation run is then calculated and displayed.</p>
 </div>
 <div id="part-three---the-exponential-simulation-accounting-for-a-que" class="section level4">
 <h4>Part Three - The Exponential Simulation accounting for a Que</h4>
@@ -517,7 +531,28 @@ average_wait_times &lt;- replicate(num_simulations, run_simulation())
 
 # Output average wait times for each run
 cat(&quot;Average Wait Times for Each Run:&quot;, average_wait_times, &quot;\n&quot;)</code></pre>
-<pre><code>## Average Wait Times for Each Run: 0.3937929 0.5832927 0.7307773</code></pre>
+<pre><code>## Average Wait Times for Each Run: 1.483401 0.9679306 0.5839068</code></pre>
+<p>In part two, we attempted to calculate the start time of each
+customer’s service as the maximum of their arrival time or the end time
+of the previous customer&#39;s service. Model one did not correctly account
+for the situation where the first customer&#39;s service time determines the
+second customer’s potential wait, and it incorrectly handles the
+alignment of times for all customers. The service rate ,mu, is faster
+than the arrival rate lambda, which would generally suggest a system
+that doesn’t build up a long queue. However, the theoretical waiting
+time still suggests a significant wait because, while the queue
+processes quickly, the relative closeness of the rates means each
+customer often has to wait for the previous one to finish. By increasing
+the number of customers and simulations, we got a more accurate
+representation of the theoretical values, averaging out the anomalies
+and fluctuations that were do to randomness.  Model two also handled
+sequential dependency. Each customer’s service start time correctly
+depends on both their arrival time and the exact end time of the
+previous customer’s service. This ensures that the simulation accurately
+represents a queue where each customer waits if and only if the previous
+customer has not finished. The loop is also initialized correctly, as it
+sets up the first customer and then iterates through the rest, ensuring
+that each customer is handled accurately without index misalignment.</p>
 </div>
 </div>
 <div id="discussions-limitations" class="section level2">
