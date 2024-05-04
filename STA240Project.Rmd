@@ -78,7 +78,7 @@ p <- ggplot(meanwaitingtime, aes(x = x, y = y)) +
 
 Figure 1 allows us to explain our mean wait time. Given the PDF (Probability Density Function) of our model, we see that the average wait time is 1/6 of an hour, or 10 minutes. This can also be described by $$1/ \lambda$$, once again giving us 1/6 of an hour.
 
-#### Part Two - The Exponential Simulation without accounting for a Que
+#### Part Two - Rudimentary Exponential Simulation accounting for a Que
 
 ```{r}
 
@@ -108,7 +108,7 @@ cat("Average Wait Times for Each Run:", average_wait_times, "\n")
 
 The code above attempts to simulate the queueing process of customers at a dining establishment where arrival and service times follow Poisson and exponential distributions, respectively. The system is simulated for 1000 customers, and the simulation is repeated 3 times. For each simulation, arrival times are generated according to a Poisson process, and service times are modeled by an exponential distribution. The simulation calculates the start and end times of each customer's service and computes the wait time for each customer as the difference between their service start time and arrival time. The average wait time for each simulation run is then calculated and displayed.
 
-#### Part Three - The Exponential Simulation accounting for a Que
+#### Part Three - Fleshed Out Exponential Simulation accounting for a Que
 
 ```{r}
 
@@ -146,7 +146,87 @@ cat("Average Wait Times for Each Run:", average_wait_times, "\n")
 
 ```
 
-In part two, we attempted to calculate the start time of each customer's service as the maximum of their arrival time or the end time of the previous customer\'s service. Model one did not correctly account for the situation where the first customer\'s service time determines the second customer's potential wait, and it incorrectly handles the alignment of times for all customers. The service rate ,mu, is faster than the arrival rate lambda, which would generally suggest a system that doesn't build up a long queue. However, the theoretical waiting time still suggests a significant wait because, while the queue processes quickly, the relative closeness of the rates means each customer often has to wait for the previous one to finish. By increasing the number of customers and simulations, we got a more accurate representation of the theoretical values, averaging out the anomalies and fluctuations that were do to randomness.  Model two also handled sequential dependency. Each customer's service start time correctly depends on both their arrival time and the exact end time of the previous customer's service. This ensures that the simulation accurately represents a queue where each customer waits if and only if the previous customer has not finished. The loop is also initialized correctly, as it sets up the first customer and then iterates through the rest, ensuring that each customer is handled accurately without index misalignment.
+In part two, we attempted to calculate the start time of each customer's service as the maximum of their arrival time or the end time of the previous customer's service. Model one did not correctly account for the situation where the first customer's service time determines the second customer's potential wait, and it incorrectly handles the alignment of times for all customers. The service rate ,mu, is faster than the arrival rate lambda, which would generally suggest a system that doesn't build up a long queue. However, the theoretical waiting time still suggests a significant wait because, while the queue processes quickly, the relative closeness of the rates means each customer often has to wait for the previous one to finish. By increasing the number of customers and simulations, we got a more accurate representation of the theoretical values, averaging out the anomalies and fluctuations that were do to randomness.  Model two also handled sequential dependency. Each customer's service start time correctly depends on both their arrival time and the exact end time of the previous customer's service. This ensures that the simulation accurately represents a queue where each customer waits if and only if the previous customer has not finished. The loop is also initialized correctly, as it sets up the first customer and then iterates through the rest, ensuring that each customer is handled accurately without index misalignment.
+
+## Scenario Two
+
+```{r Wait Times and Tables}
+
+library(queueing)
+
+simulate_day <- function(L) {
+  lambda_A <- 10  # Arrival rate (customers per hour)
+  num_tables <- 5  # Number of dining tables
+  lambda_S <- 3 * L  # Service rate per hour based on number of chefs
+
+  # M/M/c model where c = number of tables
+  # and the service rate is adjusted based on the number of chefs
+  Q_mm_c <- NewInput.MMC(lambda = lambda_A, mu = lambda_S, c = num_tables, n = 1000)
+  result <- QueueingModel(Q_mm_c)
+  
+  # Extract average wait time in the queue (time spent waiting for a table)
+  avg_wait_time <- result$Lq / lambda_A * 60  # Convert hours to minutes
+  
+  return(list(avg_wait_time = avg_wait_time, utilization = result$U))
+}
+
+# Testing with different number of chefs
+simulate_day(2)
+simulate_day(1)
+
+```
+
+```{r Optimal Chefs}
+
+library(queueing)
+
+# Function to simulate one day's operation and calculate profits
+simulate_day <- function(L) {
+  lambda_A <- 10  # Arrival rate (customers per hour)
+  num_tables <- 5  # Number of dining tables
+  lambda_S <- 3 * L  # Service rate per hour based on number of chefs
+
+  # Using M/M/c queue model
+  Q_mm_c <- NewInput.MMC(lambda = lambda_A, mu = lambda_S, c = num_tables, n = 1000)
+  result <- QueueingModel(Q_mm_c)
+
+  # Calculate hourly revenue based on the minimum of customer arrivals or table capacity
+  hourly_revenue <- min(lambda_A, lambda_S * num_tables) * 50  # $50 per customer
+  daily_revenue <- hourly_revenue * (closing_hour - opening_hour)  # 12 operating hours from 10 am to 10 pm
+
+  # Calculate daily wages for chefs
+  daily_wages <- L * 40 * 12  # $40 per hour per chef
+
+  # Calculate profits
+  profits <- daily_revenue - daily_wages
+
+  # Get average wait time in minutes
+  avg_wait_time <- result$Lq / lambda_A * 60
+
+  return(list(profits = profits, avg_wait_time = avg_wait_time, revenue = daily_revenue, wages = daily_wages))
+}
+
+# Function to find optimal number of chefs
+optimize_chefs <- function(max_chefs = 10) {
+  results <- data.frame(Chefs = integer(), Profits = numeric(), AvgWaitTime = numeric(), Revenue = numeric(), Wages = numeric())
+  
+  for (L in 1:max_chefs) {
+    sim_results <- simulate_day(L)
+    results[nrow(results) + 1, ] <- c(L, sim_results$profits, sim_results$avg_wait_time, sim_results$revenue, sim_results$wages)
+  }
+  
+  optimal_chefs <- results[which.max(results$Profits), ]
+  return(list(optimal = optimal_chefs, details = results))
+}
+
+# Execute the optimization function and print results
+optimization_results <- optimize_chefs()
+print(optimization_results$details)
+cat("Optimal number of chefs for maximum profits:", optimization_results$optimal$Chefs, "\n")
+
+
+
+```
 
 ## Discussions & Limitations
 
