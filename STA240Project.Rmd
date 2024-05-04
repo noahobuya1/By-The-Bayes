@@ -4,13 +4,15 @@ author: "Noah Obuya & Tamya Davidson"
 date: "2024-05-01"
 output:
   pdf_document:
+    keep_tex: yes
     latex_engine: xelatex
   html_document: default
 ---
 
-```{r intitializing}
+```{r initializing, echo=FALSE, warning=FALSE, message=FALSE}
 
 library(tidyverse)
+library(knitr)
 
 ```
 
@@ -22,9 +24,9 @@ Welcome to By the Bayes! A restaurant serving food straight from the Louisiana B
 
 ## Analysis Plan
 
-#### Scenario One
+### Scenario One
 
-Our first scenario models simple setting with one dining table and one chef, with operating hours 10am - 10pm. Suppose customers arrive according to a Poisson process with a rate of λA = 5 per hour.
+Our first scenario models simple setting with one dining table and one chef, with operating hours 10am - 10pm. Suppose customers arrive according to a Poisson process with a rate of
 
 $$
  \lambda_A = 5 \ \text{{per hour}} , \ \text{40 total customers from open to close}
@@ -36,23 +38,29 @@ $$
  \lambda_S = 6 
 $$
 
-To get a sense of the customer queuing experience, we will run multiple simulations of our exponential distribution. The simulation will model the time it takes to service one customer. Essentially, once one customer comes in, we want to know how long it takes for another customer to be serviced. We only have one table and one chef, so we are only able to handle one customer at a time. We will build upon the exponential distribution simulation to create an algorithm that lets us know whether a not a table is ready for a customer.
+To get a sense of the customer queuing experience, we will run multiple simulations of our exponential distribution. The simulation will model the time it takes to service one customer. Essentially, once one customer comes in, we want to know how long it takes for another customer to be serviced. We only have one table and one chef, so we are only able to handle one customer at a time. We will build upon the exponential distribution, providing two models, as we continue to model its efficacy.
 
-To analyze the customer's queueing experience, set the average number of customers in the system = (L), the average number of customers waiting in line = (Lq), the average time a customer spends in the system = (W), and the average time a customer spends waiting in line = (Wq).
+### Scenario Two
 
-(L):represents the average number of customers, including those being served and those waiting in line. In this scenario, we can use the formula for an M/M/1 queue to calculate L: L= λa/ μ−λa
+Our second scenario gives us 5 dining tables and $$L$$ chefs, with operating hours 10am - 10pm. Customers arrive according to a Poisson process with a rate of
 
-#### Scenario Two
+$$
+ \lambda_A = 10 \ \text{{per hour}} , \ \text{80 total customers from open to close}
+$$
 
-## References
+Once a customer arrives, their total service time can be modeled by an exponential distribution with rate λS = 3L. Each additional chef cuts down the wait time by $\frac 13$.
 
-#### Lab 10
+$$
+ \lambda_S = 3L
+$$
 
-Rossetti, R. (2024, April 4). Sakai.duke.edu. <https://sakai.duke.edu/access/content/group/2e691ccc-405a-4982-bf81-42137192402e/Labs/lab10_sol.html>
+We are assuming a customer spends \$50 per meal, and that each chef earns a wage of \$40 per hour.
 
-#### Simulation of Exponential Distribution using R
+To simulate this scenario, we will build upon the model we created in Scenario One. The main differences being an increase in tables, and the addition of an input variable (number of chefs). To better model the more sophisticated scenario, we will be using the queuing library in R-Studio. The queueing library in R is a package designed to help users model and analyze different types of queueing systems, which are scenarios where tasks, items, or people wait in line to be processed or served. In other words, it helps you understand and simulate situations similar to lines at a grocery store, calls waiting to be answered at a call center, or our very own probabilistic model!
 
-Hernández, C. (2020, September 29). Simulation of Exponential Distribution using R. RPubs. <https://rpubs.com/carlosehernandezr/Exponential-Distribution#>:\~:text=The%20exponential%20distribution%20can%20be,deviation%20is%20also%201%2Flambda
+Queueing theory uses a variety of models to describe different systems, and one common way to describe these models is with Kendall's notation (M/M/c). The first M stands for Markovian, meaning memoryless and random, the second M stands for the wait in between service times being modeled by an exponential distribution and the c stands for the amount of servers. In our first model, our Kendall notation would have looked like $M/M/1$ because we only had one server, or in our case, chef. In this model, our c remains a variable because we are trying to find out the best number of chefs to maintain.
+
+After running a simulation using queuing theory, we will create a function that, when given the input of chef number, returns to us average wait time, revenue, wages and of course, profits. This final table will allow us to make a decision on how many chefs we should hire.
 
 # Analysis
 
@@ -60,7 +68,7 @@ Hernández, C. (2020, September 29). Simulation of Exponential Distribution usin
 
 #### Part One - The Mean
 
-```{r meanwaittime plot}
+```{r meanwaittime plot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=4, fig.height=3}
 
 
 lambda_s1 <- 6
@@ -74,25 +82,35 @@ p <- ggplot(meanwaitingtime, aes(x = x, y = y)) +
   geom_line() +
   geom_vline(aes(xintercept = 1/lambda_s1), linetype = "dashed", color = "red") +
   annotate("text", x = 1/lambda_s1, y = max(meanwaitingtime$y)/2, label = "Mean waiting time", hjust = -0.1, color = "red") +
-  labs(x = "Waiting time", y = "Density", title = "Exponential distribution with λ = 6")
+  labs(x = "Waiting time", y = "Density", title = "Exponential distribution with lambda = 6")
+
+p
 
 
 ```
 
 Figure 1 allows us to explain our mean wait time. Given the PDF (Probability Density Function) of our model, we see that the average wait time is 1/6 of an hour, or 10 minutes. This can also be described by $$1/ \lambda$$, once again giving us 1/6 of an hour.
 
-#### Part Two - Rudimentary Exponential Simulation accounting for a Que
+Figure 1 showcases the probability density function (PDF) for our basic queuing model's wait times, characterized by an exponential distribution with a mean wait time of $\frac{1}{\lambda} = \frac{1}{6}$ hours, or approximately 10 minutes. This simple model assumes a constant service rate and a single service channel, making it particularly suited for initial planning stages.
+
+However, the exponential distribution's memorylessness property — where the probability of service completion is constant regardless of how long a customer has already waited — does not always align with practical service scenarios. In reality, customer arrivals can be highly variable, and during periods of high demand, this variability can lead to significantly longer wait times than our model suggests.
+
+From the graph, we observe that while many customers may experience wait times close to the mean, a substantial variation is possible, indicative of the potential for both shorter and unexpectedly longer waits. Such insights are crucial for managing customer expectations and improving service delivery strategies. They highlight the need for employing more comprehensive models like the M/M/c system in settings where multiple service points or varied service rates play a critical role in daily operations.
+
+#### Part Two - First Scenario One Simulation
+
 
 For our first model, we decided to look at the start and end times of each customer's service. The weight time is calculated by the difference between their service start time and their service end time.
 
-```{r}
+```{r s1simulation1, echo=FALSE, warning=FALSE, message=FALSE}
 
-lambda_A <- 5  # Arrival rate per hour
-lambda_S <- 6  # Service rate per hour
+set.seed(1)
+
+lambda_A <- 5 
+lambda_S <- 6
 num_customers <- 1000
 num_simulations <- 3
 
-# Function to run a single simulation and return the average wait time
 run_simulation <- function() {
   arrival_times <- cumsum(rexp(num_customers, rate=lambda_A))
   service_start_times <- pmax(arrival_times, cummax(arrival_times[-1] + rexp(num_customers-1, rate=lambda_S)))
@@ -101,43 +119,67 @@ run_simulation <- function() {
   return(mean(wait_times))
 }
 
-# Run simulations and calculate average wait times
 average_wait_times <- replicate(num_simulations, run_simulation())
 
-# Output average wait times for each run
-cat("Average Wait Times for Each Run:", average_wait_times, "\n")
+average_wait_times_df <- data.frame(
+  Simulation_Run = 1:num_simulations,
+  Average_Wait_Time_hours = average_wait_times,
+  Average_Wait_Time_minutes = average_wait_times * 60 
+)
+
+
+overall_average <- mean(average_wait_times)
+average_wait_times_df <- rbind(average_wait_times_df, c("Average", overall_average, overall_average * 60))
+
+
+names(average_wait_times_df)[1] <- "Simulation Run"
+names(average_wait_times_df)[2] <- "Average Wait Time (hours)"
+names(average_wait_times_df)[3] <- "Average Wait Time (minutes)"
+
+
+knitr::kable(average_wait_times_df, format = "markdown", caption = "Average Wait Times for Each Simulation Run")
+
+
 
 
 
 ```
 
-The code above attempts to simulate the queueing process of customers at a dining establishment where arrival and service times follow Poisson and exponential distributions, respectively. The system is simulated for 1000 customers, and the simulation is repeated 3 times. For each simulation, arrival times are generated according to a Poisson process, and service times are modeled by an exponential distribution. The simulation calculates the start and end times of each customer's service and computes the wait time for each customer as the difference between their service start time and arrival time. The average wait time for each simulation run is then calculated and displayed.
+The initial simulation attempts to model a single-server queue system where each customer's service and wait time are determined based on exponential distributions for arrivals and services. It assumes random arrivals and service times but lacks detailed dynamics such as the server's operational status (idle or busy) and does not track the length of the queue. This simplistic approach provides basic insights but overlooks several aspects of real-world service environments.
 
-However, average waiting time does not take into account if the customer comes in and has to wait for someone else, so the first model describes the customer coming in and having to wait for someone else, but this did not take into account the customers arrival time. Thus the next step in our analysis was to create a model that allowed us to take into consideration when the customer came into the restaurant (the arrival time).
+We can demonstrate that this model is missing the mark through observing our means for the queuing simulation
 
-### 
+Mean Wait Time in the System (including service time):
+$$W = \frac{1}{\mu - \lambda}$$
+Mean Wait Time in the Queue (excluding service time):
+$$W_q = \frac{\rho}{\mu - \lambda}$$
+where $$ \rho = \frac{\lambda}{\mu} $$ represents the server utilization, server utilization being the amount of time a server is "busy". Caculating our two means we get:
 
-Part Three - Fleshed Out Exponential Simulation accounting for a Que
+$$W = 60 \ minutes$$ and $$W_q = 50 \ minutes$$
 
-```{r}
+So, clearly, our model is incorrectly averaging means, because it finds that customers are only waiting for an average of 25 minutes ($W = 25 \ minutes$)
 
+This model needs to improve by incorporating more realistic customer behaviors and queue dynamics. Enhancements such as considering customer balking or reneging, and providing metrics for queue length and server utilization, would offer a more comprehensive understanding. Additionally, incorporating variability in arrival and service rates to reflect different operational conditions like peak hours would make the simulation more robust.
 
-lambda_A <- 5  # Arrival rate per hour
-lambda_S <- 6  # Service rate per hour
+### Part Three - Second Scenario One Simulation
+
+```{r s1simulation2, echo=FALSE, warning=FALSE, message=FALSE}
+
+set.seed(2)  
+
+lambda_A <- 5  
+lambda_S <- 6  
 num_customers <- 1000
 num_simulations <- 3
 
-# Function to run a single simulation and return the average wait time
 run_simulation <- function() {
   arrival_times <- cumsum(rexp(num_customers, rate=lambda_A))
   service_start_times <- numeric(num_customers)
   service_end_times <- numeric(num_customers)
   
-  # Initialize the service times
   service_start_times[1] <- arrival_times[1]
   service_end_times[1] <- service_start_times[1] + rexp(1, rate=lambda_S)
   
-  # Calculate service times for each subsequent customer
   for (i in 2:num_customers) {
     service_start_times[i] <- max(arrival_times[i], service_end_times[i-1])
     service_end_times[i] <- service_start_times[i] + rexp(1, rate=lambda_S)
@@ -147,15 +189,29 @@ run_simulation <- function() {
   return(mean(wait_times))
 }
 
-# Run simulations and calculate average wait times
 average_wait_times <- replicate(num_simulations, run_simulation())
 
-# Output average wait times for each run
-cat("Average Wait Times for Each Run:", average_wait_times, "\n")
+average_wait_times_df <- data.frame(
+  "Simulation Run" = 1:num_simulations,
+  "Average Wait Time (hours)" = average_wait_times,
+  "Average Wait Time (minutes)" = average_wait_times * 60  
+)
+
+overall_average <- mean(average_wait_times)
+average_wait_times_df <- rbind(average_wait_times_df, c("Average", overall_average, overall_average * 60))
+
+names(average_wait_times_df)[1] <- "Simulation Run"
+names(average_wait_times_df)[2] <- "Average Wait Time (hours)"
+names(average_wait_times_df)[3] <- "Average Wait Time (minutes)"
+
+knitr::kable(average_wait_times_df, format = "markdown", caption = "Average Wait Times Improved Simulation")
+
 
 ```
 
-In part two, we attempted to calculate the start time of each customer's service as the maximum of their arrival time or the end time of the previous customer's service. Model one did not correctly account for the situation where the first customer's service time determines the second customer's potential wait, and it incorrectly handles the alignment of times for all customers. The service rate ,mu, is faster than the arrival rate lambda, which would generally suggest a system that doesn't build up a long queue. However, the theoretical waiting time still suggests a significant wait because, while the queue processes quickly, the relative closeness of the rates means each customer often has to wait for the previous one to finish. By increasing the number of customers and simulations, we got a more accurate representation of the theoretical values, averaging out the anomalies and fluctuations that were do to randomness.  Model two also handled sequential dependency. Each customer's service start time correctly depends on both their arrival time and the exact end time of the previous customer's service. This ensures that the simulation accurately represents a queue where each customer waits if and only if the previous customer has not finished. The loop is also initialized correctly, as it sets up the first customer and then iterates through the rest, ensuring that each customer is handled accurately without index misalignment.
+As we can see, the improved simulation averages much closer to the true mean wait time of $W = 60 \ minutes$. The revised simulation significantly improves upon the first by explicitly calculating the waiting times for each customer, considering the time until the previous customer's service is complete. This approach more accurately reflects actual queue dynamics, where service cannot begin until the previous service has concluded, thus providing a realistic measure of waiting times. Each customer's start time is dynamically adjusted based on the service end time of the preceding customer, which prevents any overlap and simulates a true first-come, first-served queue.
+
+This methodology provides deeper insights into how service efficiency impacts customer waiting experiences, making it a valuable tool for operational planning and optimization. Further improvements could include multi-server configurations, which is what we will tackle next, in Scenario Two.
 
 ### Scenario Two
 
@@ -257,3 +313,13 @@ This model simulates the daily operation of a restaurant to determine the optima
 ## Discussions & Limitations
 
 ## Conclusion
+
+## References
+
+#### Lab 10
+
+Rossetti, R. (2024, April 4). Sakai.duke.edu. <https://sakai.duke.edu/access/content/group/2e691ccc-405a-4982-bf81-42137192402e/Labs/lab10_sol.html>
+
+#### Simulation of Exponential Distribution using R
+
+Hernández, C. (2020, September 29). Simulation of Exponential Distribution using R. RPubs. <https://rpubs.com/carlosehernandezr/Exponential-Distribution#>:\~:text=The%20exponential%20distribution%20can%20be,deviation%20is%20also%201%2Flambda
